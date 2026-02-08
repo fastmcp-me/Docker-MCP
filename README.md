@@ -26,6 +26,8 @@ npm start
 
 ### Core Capabilities
 - ✅ **36 Docker Tools**: Complete coverage of Docker operations
+- ✅ **Remote Docker Support**: Connect to Docker on remote hosts via TCP, HTTP, HTTPS, or SSH tunnel
+- ✅ **Secure Connections**: Full TLS/SSL support for secure remote Docker management
 - ✅ **Container Management**: Create, run, start, stop, restart, pause, unpause, rename, remove, exec, stats, logs
 - ✅ **Image Operations**: List, pull, build, push, tag, remove, prune
 - ✅ **Network Management**: List, create, remove, inspect, connect, disconnect
@@ -35,6 +37,12 @@ npm start
 - ✅ **VS Code Integration**: Works seamlessly with GitHub Copilot
 - ✅ **Industry Standard**: Uses MCP SDK and Docker best practices
 - ✅ **TypeScript**: Full type safety and modern JavaScript features
+
+### What's New in v2.1
+- 🌐 **Remote Docker Host Support**: Connect to Docker on any remote host
+- 🔒 **TLS/HTTPS Support**: Secure connections with certificate authentication
+- 🔑 **Environment-based Configuration**: Easy setup via DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH
+- 🚇 **SSH Tunnel Support**: Secure remote access without exposing Docker API
 
 ### What's New in v2.0
 - 🚀 **25 New Tools**: Added extensive container, image, network, and volume management
@@ -82,17 +90,77 @@ Run the server directly:
 npm start
 ```
 
+### Remote Docker Configuration
+
+The MCP server supports connecting to remote Docker hosts using environment variables:
+
+#### Connect to Remote Docker via TCP
+```bash
+DOCKER_HOST=tcp://192.168.1.100:2375 npm start
+```
+
+#### Connect to Remote Docker via HTTPS with TLS
+```bash
+DOCKER_HOST=https://192.168.1.100:2376 \
+DOCKER_TLS_VERIFY=1 \
+DOCKER_CERT_PATH=~/.docker/certs \
+npm start
+```
+
+#### Connect via SSH Tunnel
+First, set up an SSH tunnel:
+```bash
+ssh -NL 2375:/var/run/docker.sock user@remote-host
+```
+
+Then connect to the tunneled Docker:
+```bash
+DOCKER_HOST=tcp://localhost:2375 npm start
+```
+
 ### VS Code Integration
 
 To integrate with VS Code and GitHub Copilot, add the following to your MCP settings file:
 
-**For VS Code** (`~/.vscode/mcp-settings.json` or in your workspace settings):
+**For Local Docker** (`~/.vscode/mcp-settings.json` or in your workspace settings):
 ```json
 {
   "mcpServers": {
     "docker": {
       "command": "node",
       "args": ["/path/to/Docker-MCP/dist/index.js"]
+    }
+  }
+}
+```
+
+**For Remote Docker over TCP**:
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://192.168.1.100:2375"
+      }
+    }
+  }
+}
+```
+
+**For Remote Docker with TLS**:
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://192.168.1.100:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/home/user/.docker/certs"
+      }
     }
   }
 }
@@ -489,6 +557,29 @@ If you get "Cannot connect to Docker daemon" errors:
 - Check Docker socket permissions
 - On Linux: Add your user to the docker group: `sudo usermod -aG docker $USER`
 
+#### Remote Docker Connection Issues
+
+If you can't connect to a remote Docker host:
+
+1. **TCP Connection Issues**:
+   - Ensure the Docker daemon is configured to listen on TCP: Check `/etc/docker/daemon.json`
+   - Verify the port is open: `telnet remote-host 2375`
+   - Check firewall rules on the remote host
+   - Ensure `DOCKER_HOST` environment variable is set correctly
+
+2. **TLS/HTTPS Connection Issues**:
+   - Verify certificates are in the correct directory
+   - Check certificate file names: `ca.pem`, `cert.pem`, `key.pem`
+   - Ensure certificates are readable: `chmod 644 ca.pem cert.pem key.pem`
+   - Verify `DOCKER_TLS_VERIFY=1` and `DOCKER_CERT_PATH` are set
+   - Test with Docker CLI first: `docker --tlsverify --host=tcp://remote-host:2376 ps`
+
+3. **SSH Tunnel Issues**:
+   - Verify SSH tunnel is running: `ps aux | grep ssh`
+   - Test tunnel: `curl http://localhost:2375/version`
+   - Ensure local port is not already in use: `lsof -i :2375`
+   - Try reconnecting the tunnel if connection is lost
+
 ### VS Code Integration Issues
 
 If the MCP server doesn't appear in VS Code:
@@ -496,6 +587,7 @@ If the MCP server doesn't appear in VS Code:
 - Check that the server builds successfully: `npm run build`
 - Restart VS Code after updating MCP settings
 - Check VS Code Output panel for MCP-related errors
+- Verify environment variables in MCP settings are correct
 
 ### Array-Related Errors
 

@@ -8,8 +8,98 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import Docker from "dockerode";
 import tarFs from "tar-fs";
+import { readFileSync } from "fs";
 
-const docker = new Docker();
+/**
+ * Initialize Docker client with support for remote hosts
+ * Supports configuration via environment variables:
+ * - DOCKER_HOST: Docker daemon URL (e.g., tcp://host:port, unix:///var/run/docker.sock, http://host:port)
+ * - DOCKER_TLS_VERIFY: Enable TLS verification (1 or true)
+ * - DOCKER_CERT_PATH: Path to directory containing TLS certificates (ca.pem, cert.pem, key.pem)
+ * - DOCKER_PORT: Docker daemon port (default: 2375 for HTTP, 2376 for HTTPS)
+ */
+function initializeDockerClient(): Docker {
+  const dockerHost = process.env.DOCKER_HOST;
+  const tlsVerify = process.env.DOCKER_TLS_VERIFY === '1' || process.env.DOCKER_TLS_VERIFY === 'true';
+  const certPath = process.env.DOCKER_CERT_PATH;
+  const dockerPort = process.env.DOCKER_PORT;
+
+  // If no DOCKER_HOST is specified, use default (local socket)
+  if (!dockerHost) {
+    return new Docker();
+  }
+
+  // Parse DOCKER_HOST URL
+  let protocol = 'http';
+  let host = 'localhost';
+  let port = parseInt(dockerPort || '2375', 10);
+
+  if (dockerHost.startsWith('unix://')) {
+    // Unix socket
+    return new Docker({ socketPath: dockerHost.replace('unix://', '') });
+  } else if (dockerHost.startsWith('tcp://')) {
+    // TCP connection
+    const url = dockerHost.replace('tcp://', '');
+    const parts = url.split(':');
+    host = parts[0];
+    if (parts[1]) {
+      port = parseInt(parts[1], 10);
+    }
+  } else if (dockerHost.startsWith('http://')) {
+    // HTTP connection
+    protocol = 'http';
+    const url = dockerHost.replace('http://', '');
+    const parts = url.split(':');
+    host = parts[0];
+    if (parts[1]) {
+      port = parseInt(parts[1], 10);
+    }
+  } else if (dockerHost.startsWith('https://')) {
+    // HTTPS connection
+    protocol = 'https';
+    const url = dockerHost.replace('https://', '');
+    const parts = url.split(':');
+    host = parts[0];
+    if (parts[1]) {
+      port = parseInt(parts[1], 10);
+    }
+  } else {
+    // Assume host:port format
+    const parts = dockerHost.split(':');
+    host = parts[0];
+    if (parts[1]) {
+      port = parseInt(parts[1], 10);
+    }
+  }
+
+  // Build Docker options
+  const dockerOptions: any = {
+    host,
+    port,
+  };
+
+  // Add TLS/HTTPS support
+  if (tlsVerify && certPath) {
+    dockerOptions.protocol = 'https';
+    dockerOptions.ca = readFileSync(`${certPath}/ca.pem`);
+    dockerOptions.cert = readFileSync(`${certPath}/cert.pem`);
+    dockerOptions.key = readFileSync(`${certPath}/key.pem`);
+  } else if (protocol === 'https') {
+    dockerOptions.protocol = 'https';
+    // If HTTPS but no certs, try without verification (less secure)
+    if (certPath) {
+      dockerOptions.ca = readFileSync(`${certPath}/ca.pem`);
+      dockerOptions.cert = readFileSync(`${certPath}/cert.pem`);
+      dockerOptions.key = readFileSync(`${certPath}/key.pem`);
+    }
+  } else {
+    dockerOptions.protocol = protocol;
+  }
+
+  return new Docker(dockerOptions);
+}
+
+const docker = initializeDockerClient();
 
 // Define proper input schemas for tools
 const TOOL_SCHEMAS = {
