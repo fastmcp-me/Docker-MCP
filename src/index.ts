@@ -1105,7 +1105,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error("Container ID is required");
         }
         const container = docker.getContainer(args.containerId as string);
-        const stream = (args?.stream as boolean) || false;
         
         const stats = await container.stats({ stream: false });
         
