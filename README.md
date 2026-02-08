@@ -110,7 +110,7 @@ npm start
 #### Connect via SSH Tunnel
 First, set up an SSH tunnel:
 ```bash
-ssh -NL 2375:/var/run/docker.sock user@remote-host
+ssh -NL localhost:2375:/var/run/docker.sock user@remote-host
 ```
 
 Then connect to the tunneled Docker:

@@ -66,7 +66,7 @@ For SSH-based connections, set up an SSH tunnel first:
 
 ```bash
 # Forward local port 2375 to remote Docker socket
-ssh -NL 2375:/var/run/docker.sock user@remote-host
+ssh -NL localhost:2375:/var/run/docker.sock user@remote-host
 ```
 
 Then configure the MCP server to use the tunneled connection:
@@ -265,12 +265,12 @@ scp user@docker-host:/etc/docker/ssl/key.pem ~/.docker/certs/
 
 1. Set up SSH tunnel in a separate terminal:
 ```bash
-ssh -NL 2375:/var/run/docker.sock user@remote-docker-host
+ssh -NL localhost:2375:/var/run/docker.sock user@remote-docker-host
 ```
 
 Or run it in the background:
 ```bash
-ssh -fNL 2375:/var/run/docker.sock user@remote-docker-host
+ssh -fNL localhost:2375:/var/run/docker.sock user@remote-docker-host
 ```
 
 2. MCP Configuration:

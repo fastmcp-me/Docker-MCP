@@ -95,10 +95,10 @@ Once configured, you can use natural language prompts to manage containers on th
 **Step 1: Create SSH Tunnel**
 ```bash
 # Start SSH tunnel in background
-ssh -fNL 2375:/var/run/docker.sock user@remote-server
+ssh -fNL localhost:2375:/var/run/docker.sock user@remote-server
 
 # Or with autossh for automatic reconnection
-autossh -M 0 -fNL 2375:/var/run/docker.sock user@remote-server
+autossh -M 0 -fNL localhost:2375:/var/run/docker.sock user@remote-server
 ```
 
 **Step 2: MCP Configuration**

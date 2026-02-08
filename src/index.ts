@@ -30,7 +30,7 @@ function initializeDockerClient(): Docker {
   }
 
   // Parse DOCKER_HOST URL
-  let protocol = 'http';
+  let protocol: 'http' | 'https' | 'ssh' = 'http';
   let host = 'localhost';
   let port = parseInt(dockerPort || '2375', 10);
 
@@ -73,7 +73,14 @@ function initializeDockerClient(): Docker {
   }
 
   // Build Docker options
-  const dockerOptions: any = {
+  const dockerOptions: {
+    host: string;
+    port: number;
+    protocol?: 'http' | 'https' | 'ssh';
+    ca?: Buffer;
+    cert?: Buffer;
+    key?: Buffer;
+  } = {
     host,
     port,
   };
