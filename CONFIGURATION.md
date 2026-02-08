@@ -2,6 +2,8 @@
 
 ## VS Code / GitHub Copilot Configuration
 
+### Local Docker (Default)
+
 Create or edit `~/.vscode/mcp-settings.json`:
 
 ```json
@@ -15,7 +17,77 @@ Create or edit `~/.vscode/mcp-settings.json`:
 }
 ```
 
+### Remote Docker Host via TCP
+
+To connect to a remote Docker host over TCP:
+
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/absolute/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://192.168.1.100:2375"
+      }
+    }
+  }
+}
+```
+
+### Remote Docker Host via HTTPS with TLS
+
+For secure remote connections with TLS certificates:
+
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/absolute/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://192.168.1.100:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/path/to/certs"
+      }
+    }
+  }
+}
+```
+
+The certificate directory should contain:
+- `ca.pem` - Certificate Authority certificate
+- `cert.pem` - Client certificate
+- `key.pem` - Client private key
+
+### Remote Docker via SSH Tunnel
+
+For SSH-based connections, set up an SSH tunnel first:
+
+```bash
+# Forward local port 2375 to remote Docker socket
+ssh -NL localhost:2375:/var/run/docker.sock user@remote-host
+```
+
+Then configure the MCP server to use the tunneled connection:
+
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/absolute/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://localhost:2375"
+      }
+    }
+  }
+}
+```
+
 ## Claude Desktop Configuration
+
+### Local Docker (Default)
 
 Create or edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or 
 `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
@@ -26,6 +98,222 @@ Create or edit `~/Library/Application Support/Claude/claude_desktop_config.json`
     "docker": {
       "command": "node",
       "args": ["/absolute/path/to/Docker-MCP/dist/index.js"]
+    }
+  }
+}
+```
+
+### Remote Docker Host
+
+For remote Docker hosts, add the `env` section with connection details:
+
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/absolute/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://192.168.1.100:2375"
+      }
+    }
+  }
+}
+```
+
+## Environment Variables
+
+The Docker MCP Server supports the following environment variables for configuring remote Docker host connections:
+
+### DOCKER_HOST
+
+Specifies the Docker daemon to connect to. Supports multiple formats:
+
+- **Unix socket** (default): `unix:///var/run/docker.sock`
+- **TCP**: `tcp://host:port` (e.g., `tcp://192.168.1.100:2375`)
+- **HTTP**: `http://host:port` (e.g., `http://192.168.1.100:2375`)
+- **HTTPS**: `https://host:port` (e.g., `https://192.168.1.100:2376`)
+- **Host:port**: `host:port` (assumes TCP, e.g., `192.168.1.100:2375`)
+
+If not set, defaults to local Docker socket (`/var/run/docker.sock` on Unix or named pipe on Windows).
+
+### DOCKER_TLS_VERIFY
+
+Enable TLS certificate verification when connecting to remote Docker hosts over HTTPS.
+
+- Set to `1` or `true` to enable
+- Requires `DOCKER_CERT_PATH` to be set
+
+### DOCKER_CERT_PATH
+
+Path to directory containing TLS certificates for secure connections. The directory must contain:
+
+- `ca.pem` - Certificate Authority certificate
+- `cert.pem` - Client certificate  
+- `key.pem` - Client private key
+
+Example: `/home/user/.docker/certs`
+
+### DOCKER_PORT
+
+Override the default Docker daemon port. Defaults:
+- HTTP: `2375`
+- HTTPS: `2376`
+
+## Remote Docker Setup Examples
+
+### Example 1: Unsecured Remote Docker (Testing Only)
+
+**Warning**: Only use this in trusted networks or for testing purposes.
+
+Configure remote Docker daemon (`/etc/docker/daemon.json`):
+```json
+{
+  "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
+}
+```
+
+MCP Configuration:
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://your-docker-host:2375"
+      }
+    }
+  }
+}
+```
+
+### Example 2: Secure Remote Docker with TLS
+
+**Recommended for production use.**
+
+1. Generate TLS certificates on the Docker host:
+```bash
+# On the Docker host
+mkdir -p /etc/docker/ssl
+cd /etc/docker/ssl
+
+# Generate CA key and certificate
+openssl genrsa -aes256 -out ca-key.pem 4096
+openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem
+
+# Generate server key and certificate
+openssl genrsa -out server-key.pem 4096
+openssl req -subj "/CN=your-docker-host" -sha256 -new -key server-key.pem -out server.csr
+echo subjectAltName = DNS:your-docker-host,IP:192.168.1.100 >> extfile.cnf
+echo extendedKeyUsage = serverAuth >> extfile.cnf
+openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem \
+  -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+
+# Generate client key and certificate
+openssl genrsa -out key.pem 4096
+openssl req -subj '/CN=client' -new -key key.pem -out client.csr
+echo extendedKeyUsage = clientAuth > extfile-client.cnf
+openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem \
+  -CAcreateserial -out cert.pem -extfile extfile-client.cnf
+
+# Set proper permissions
+chmod -v 0400 ca-key.pem key.pem server-key.pem
+chmod -v 0444 ca.pem server-cert.pem cert.pem
+```
+
+2. Configure Docker daemon (`/etc/docker/daemon.json`):
+```json
+{
+  "hosts": ["tcp://0.0.0.0:2376", "unix:///var/run/docker.sock"],
+  "tlsverify": true,
+  "tlscacert": "/etc/docker/ssl/ca.pem",
+  "tlscert": "/etc/docker/ssl/server-cert.pem",
+  "tlskey": "/etc/docker/ssl/server-key.pem"
+}
+```
+
+3. Copy client certificates to your local machine:
+```bash
+# Copy ca.pem, cert.pem, and key.pem to ~/.docker/certs/
+mkdir -p ~/.docker/certs
+scp user@docker-host:/etc/docker/ssl/ca.pem ~/.docker/certs/
+scp user@docker-host:/etc/docker/ssl/cert.pem ~/.docker/certs/
+scp user@docker-host:/etc/docker/ssl/key.pem ~/.docker/certs/
+```
+
+4. MCP Configuration:
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://your-docker-host:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/home/user/.docker/certs"
+      }
+    }
+  }
+}
+```
+
+### Example 3: Remote Docker via SSH Tunnel
+
+**Most secure option without TLS certificate management.**
+
+1. Set up SSH tunnel in a separate terminal:
+```bash
+ssh -NL localhost:2375:/var/run/docker.sock user@remote-docker-host
+```
+
+Or run it in the background:
+```bash
+ssh -fNL localhost:2375:/var/run/docker.sock user@remote-docker-host
+```
+
+2. MCP Configuration:
+```json
+{
+  "mcpServers": {
+    "docker": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://localhost:2375"
+      }
+    }
+  }
+}
+```
+
+### Example 4: Multiple Docker Hosts
+
+You can configure multiple MCP servers to manage different Docker hosts:
+
+```json
+{
+  "mcpServers": {
+    "docker-local": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"]
+    },
+    "docker-staging": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://staging-server:2375"
+      }
+    },
+    "docker-production": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://prod-server:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/home/user/.docker/prod-certs"
+      }
     }
   }
 }

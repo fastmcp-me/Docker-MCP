@@ -2,6 +2,126 @@
 
 This document provides practical examples of using the Docker MCP Server with GitHub Copilot, Claude, and other MCP-compatible AI assistants.
 
+## Remote Docker Configuration Examples
+
+### Example 1: Connecting to Remote Docker via TCP
+
+**Configuration (VS Code `~/.vscode/mcp-settings.json`):**
+```json
+{
+  "mcpServers": {
+    "docker-remote": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://192.168.1.100:2375"
+      }
+    }
+  }
+}
+```
+
+**Usage:**
+Once configured, you can use natural language prompts to manage containers on the remote host:
+```
+"List all containers on the remote Docker host"
+"Run nginx on the remote server on port 8080"
+```
+
+### Example 2: Connecting to Remote Docker via HTTPS with TLS
+
+**Configuration:**
+```json
+{
+  "mcpServers": {
+    "docker-secure": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://production-server:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/home/user/.docker/prod-certs"
+      }
+    }
+  }
+}
+```
+
+**Usage:**
+```
+"Show me all running containers on the production server"
+"Deploy the latest version of my-app:v2.0 on production"
+```
+
+### Example 3: Multiple Docker Hosts
+
+**Configuration:**
+```json
+{
+  "mcpServers": {
+    "docker-local": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"]
+    },
+    "docker-staging": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://staging.example.com:2375"
+      }
+    },
+    "docker-production": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "https://prod.example.com:2376",
+        "DOCKER_TLS_VERIFY": "1",
+        "DOCKER_CERT_PATH": "/home/user/.docker/prod-certs"
+      }
+    }
+  }
+}
+```
+
+**Usage:**
+```
+"@docker-local list containers"
+"@docker-staging deploy my-app:latest"
+"@docker-production check system info"
+```
+
+### Example 4: SSH Tunnel Setup
+
+**Step 1: Create SSH Tunnel**
+```bash
+# Start SSH tunnel in background
+ssh -fNL localhost:2375:/var/run/docker.sock user@remote-server
+
+# Or with autossh for automatic reconnection
+autossh -M 0 -fNL localhost:2375:/var/run/docker.sock user@remote-server
+```
+
+**Step 2: MCP Configuration**
+```json
+{
+  "mcpServers": {
+    "docker-ssh": {
+      "command": "node",
+      "args": ["/path/to/Docker-MCP/dist/index.js"],
+      "env": {
+        "DOCKER_HOST": "tcp://localhost:2375"
+      }
+    }
+  }
+}
+```
+
+**Usage:**
+```
+"Connect to the tunneled Docker and list all containers"
+"Run a test container on the remote host via SSH tunnel"
+```
+
 ## Basic Container Operations
 
 ### Example 1: Run a Simple Web Server
