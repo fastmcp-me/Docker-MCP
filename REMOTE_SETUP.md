@@ -301,7 +301,7 @@ node test-connection.js
    openssl genrsa -out server-key.pem 4096
    openssl req -subj "/CN=$HOST" -sha256 -new -key server-key.pem -out server.csr
 
-   echo "subjectAltName = DNS:$HOST,IP:$IP,IP:127.0.0.1" >> extfile.cnf
+   echo "subjectAltName = DNS:$HOST,IP:$IP,IP:127.0.0.1" > extfile.cnf
    echo "extendedKeyUsage = serverAuth" >> extfile.cnf
 
    openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem \
@@ -485,8 +485,10 @@ echo "Generating server certificate..."
 openssl genrsa -out server-key.pem 4096
 openssl req -subj "/CN=$HOST" -sha256 -new -key server-key.pem -out server.csr
 
-echo "subjectAltName = DNS:$HOST,IP:$IP,IP:127.0.0.1" >> extfile.cnf
-echo "extendedKeyUsage = serverAuth" >> extfile.cnf
+cat > extfile.cnf <<EOF
+subjectAltName = DNS:$HOST,IP:$IP,IP:127.0.0.1
+extendedKeyUsage = serverAuth
+EOF
 
 openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem \
   -CAcreateserial -out server-cert.pem -extfile extfile.cnf
@@ -756,11 +758,12 @@ docker images
 2. **Check socket permissions**:
    ```bash
    ls -l /var/run/docker.sock
-   # Should show: srw-rw---- docker docker
+   # Should show: srw-rw---- root docker
    
-   # Fix if needed
-   sudo chmod 666 /var/run/docker.sock  # Temporary
-   # Or properly add user to docker group (above)
+   # Fix ownership and permissions if needed
+   sudo chown root:docker /var/run/docker.sock
+   sudo chmod 660 /var/run/docker.sock
+   # Ensure your user is in the 'docker' group (see above)
    ```
 
 3. **Check SELinux** (RHEL/CentOS):

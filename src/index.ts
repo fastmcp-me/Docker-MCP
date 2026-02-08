@@ -45,6 +45,9 @@ export function initializeDockerClient(): Docker {
   if (dockerHost.startsWith('unix://')) {
     // Unix socket
     return new Docker({ socketPath: dockerHost.replace('unix://', '') });
+  } else if (dockerHost.startsWith('npipe://')) {
+    // Windows named pipe
+    return new Docker({ socketPath: dockerHost });
   } else if (dockerHost.startsWith('tcp://')) {
     // TCP connection
     const url = dockerHost.replace('tcp://', '');
@@ -1867,6 +1870,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(validationResult, null, 2),
             },
           ],
+          isError: validationResult.status === "error",
         };
       }
 

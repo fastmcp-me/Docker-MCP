@@ -17,7 +17,7 @@
 
 import Docker from 'dockerode';
 import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 
 // ANSI color codes for better output
 const colors = {
@@ -102,7 +102,15 @@ function validateCertificates(certPath) {
     return false;
   }
 
-  const expandedPath = certPath.replace(/^~/, process.env.HOME || process.env.USERPROFILE);
+  const homeDir = process.env.HOME || process.env.USERPROFILE;
+  let expandedPath = certPath;
+  if (certPath.startsWith('~')) {
+    if (homeDir) {
+      expandedPath = certPath.replace(/^~/, homeDir);
+    } else {
+      logWarning('Certificate path starts with "~" but HOME/USERPROFILE is not set; using literal path without expansion');
+    }
+  }
   const resolvedPath = resolve(expandedPath);
   
   logInfo(`Certificate directory: ${resolvedPath}`);
@@ -158,7 +166,11 @@ function initializeDockerClient() {
   let portFromUrl;
 
   if (dockerHost.startsWith('unix://')) {
+    // Unix socket
     return new Docker({ socketPath: dockerHost.replace('unix://', '') });
+  } else if (dockerHost.startsWith('npipe://')) {
+    // Windows named pipe
+    return new Docker({ socketPath: dockerHost });
   } else if (dockerHost.startsWith('tcp://')) {
     const url = dockerHost.replace('tcp://', '');
     const parts = url.split(':');
@@ -201,11 +213,22 @@ function initializeDockerClient() {
   // Add TLS/HTTPS support
   if (tlsVerify && certPath) {
     dockerOptions.protocol = 'https';
-    const expandedPath = certPath.replace(/^~/, process.env.HOME || process.env.USERPROFILE);
+    const homeDir = process.env.HOME || process.env.USERPROFILE;
+    let expandedPath = certPath;
+    if (certPath.startsWith('~')) {
+      if (homeDir) {
+        expandedPath = certPath.replace(/^~/, homeDir);
+      } else {
+        throw new Error(
+          'Certificate path starts with "~" but HOME/USERPROFILE is not set. ' +
+          'Please use an absolute path or set the HOME/USERPROFILE environment variable.'
+        );
+      }
+    }
     try {
-      dockerOptions.ca = readFileSync(`${expandedPath}/ca.pem`);
-      dockerOptions.cert = readFileSync(`${expandedPath}/cert.pem`);
-      dockerOptions.key = readFileSync(`${expandedPath}/key.pem`);
+      dockerOptions.ca = readFileSync(join(expandedPath, 'ca.pem'));
+      dockerOptions.cert = readFileSync(join(expandedPath, 'cert.pem'));
+      dockerOptions.key = readFileSync(join(expandedPath, 'key.pem'));
     } catch (error) {
       throw new Error(
         `Failed to load TLS certificates from ${expandedPath}. ` +
@@ -216,11 +239,20 @@ function initializeDockerClient() {
   } else if (protocol === 'https') {
     dockerOptions.protocol = 'https';
     if (certPath) {
-      const expandedPath = certPath.replace(/^~/, process.env.HOME || process.env.USERPROFILE);
+      const homeDir = process.env.HOME || process.env.USERPROFILE;
+      let expandedPath = certPath;
+      if (certPath.startsWith('~')) {
+        if (homeDir) {
+          expandedPath = certPath.replace(/^~/, homeDir);
+        } else {
+          logWarning('Certificate path starts with "~" but HOME/USERPROFILE is not set; skipping certificate loading');
+          return new Docker(dockerOptions);
+        }
+      }
       try {
-        dockerOptions.ca = readFileSync(`${expandedPath}/ca.pem`);
-        dockerOptions.cert = readFileSync(`${expandedPath}/cert.pem`);
-        dockerOptions.key = readFileSync(`${expandedPath}/key.pem`);
+        dockerOptions.ca = readFileSync(join(expandedPath, 'ca.pem'));
+        dockerOptions.cert = readFileSync(join(expandedPath, 'cert.pem'));
+        dockerOptions.key = readFileSync(join(expandedPath, 'key.pem'));
       } catch (error) {
         // Non-fatal for HTTPS without explicit TLS verification
         logWarning(`Could not load certificates: ${error.message}`);
