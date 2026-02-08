@@ -31,7 +31,7 @@ function initializeDockerClient(): Docker {
 
   // Parse DOCKER_HOST URL
   let protocol: 'http' | 'https' | 'ssh' = 'http';
-  let host = 'localhost';
+  let host: string;
   let port = parseInt(dockerPort || '2375', 10);
 
   if (dockerHost.startsWith('unix://')) {
