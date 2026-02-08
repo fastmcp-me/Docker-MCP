@@ -7,6 +7,7 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import Docker from "dockerode";
+import tarFs from "tar-fs";
 
 const docker = new Docker();
 
@@ -1229,7 +1230,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error("Tag is required");
         }
         
-        const tarStream = require("tar-fs").pack(args.context as string);
+        const tarStream = tarFs.pack(args.context as string);
         const stream = await docker.buildImage(tarStream, {
           t: args.tag as string,
           dockerfile: (args.dockerfile as string) || "Dockerfile",
