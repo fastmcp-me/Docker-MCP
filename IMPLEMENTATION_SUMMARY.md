@@ -7,8 +7,8 @@ The repository needed a fully functional, feature-rich, industry-standard compli
 
 ### Core Implementation
 - **Technology Stack**: TypeScript + Node.js
-- **MCP SDK**: @modelcontextprotocol/sdk v1.0.4
-- **Docker Library**: dockerode v4.0.2
+- **MCP SDK**: @modelcontextprotocol/sdk ^1.0.4
+- **Docker Library**: dockerode ^4.0.2
 - **Build System**: TypeScript compiler with ES2022 target
 
 ### Key Fix: Array Handling
