@@ -79,7 +79,7 @@ Relates to #
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] My changes generate no new warnings or errors
-- [ ] I have removed any debugging code and console.logs
+- [ ] I have removed any debugging code and console.log statements
 
 ### Testing
 - [ ] I have added tests that prove my fix is effective or that my feature works
