@@ -1,5 +1,12 @@
 # Docker MCP Server
 
+[![CI](https://github.com/Swartdraak/Docker-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/Swartdraak/Docker-MCP/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Swartdraak/Docker-MCP/actions/workflows/codeql.yml/badge.svg)](https://github.com/Swartdraak/Docker-MCP/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-API-2496ED?logo=docker)](https://www.docker.com/)
+
 A comprehensive, production-ready, industry-standard compliant MCP (Model Context Protocol) Server that enables full Docker management capabilities for AI assistants like GitHub Copilot and Claude. Featuring 36 powerful tools covering containers, images, networks, volumes, and system operations.
 
 ## Quick Start
