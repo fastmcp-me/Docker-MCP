@@ -40,7 +40,7 @@ export function initializeDockerClient(): Docker {
   // Parse DOCKER_HOST URL
   let protocol: 'http' | 'https' | 'ssh' = 'http';
   let host: string;
-  let useHttps = false;
+  let portFromUrl: number | undefined;
 
   if (dockerHost.startsWith('unix://')) {
     // Unix socket
@@ -50,39 +50,37 @@ export function initializeDockerClient(): Docker {
     const url = dockerHost.replace('tcp://', '');
     const parts = url.split(':');
     host = parts[0];
+    if (parts[1]) portFromUrl = parseInt(parts[1], 10);
   } else if (dockerHost.startsWith('http://')) {
     // HTTP connection
     protocol = 'http';
     const url = dockerHost.replace('http://', '');
     const parts = url.split(':');
     host = parts[0];
+    if (parts[1]) portFromUrl = parseInt(parts[1], 10);
   } else if (dockerHost.startsWith('https://')) {
     // HTTPS connection
     protocol = 'https';
-    useHttps = true;
     const url = dockerHost.replace('https://', '');
     const parts = url.split(':');
     host = parts[0];
+    if (parts[1]) portFromUrl = parseInt(parts[1], 10);
   } else {
     // Assume host:port format
     const parts = dockerHost.split(':');
     host = parts[0];
+    if (parts[1]) portFromUrl = parseInt(parts[1], 10);
   }
 
   // Determine port: use explicit DOCKER_PORT, then port from URL, then default based on protocol
   let port: number;
   if (dockerPort) {
     port = parseInt(dockerPort, 10);
+  } else if (portFromUrl) {
+    port = portFromUrl;
   } else {
-    // Extract port from DOCKER_HOST URL if present
-    const urlWithoutProtocol = dockerHost.replace(/^(unix|tcp|https?):\/\//, '');
-    const parts = urlWithoutProtocol.split(':');
-    if (parts[1]) {
-      port = parseInt(parts[1], 10);
-    } else {
-      // Default port based on whether TLS/HTTPS is used
-      port = (useHttps || tlsVerify) ? 2376 : 2375;
-    }
+    // Default port based on whether TLS/HTTPS is used
+    port = (protocol === 'https' || tlsVerify) ? 2376 : 2375;
   }
 
   // Build Docker options
