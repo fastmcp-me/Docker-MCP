@@ -38,7 +38,7 @@ npm start
 - ✅ **Industry Standard**: Uses MCP SDK and Docker best practices
 - ✅ **TypeScript**: Full type safety and modern JavaScript features
 
-### What's New in v2.1
+### Recent Enhancements
 - 🌐 **Remote Docker Host Support**: Connect to Docker on any remote host
 - 🔒 **TLS/HTTPS Support**: Secure connections with certificate authentication
 - 🔑 **Environment-based Configuration**: Easy setup via DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH

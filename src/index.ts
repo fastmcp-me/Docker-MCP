@@ -18,11 +18,19 @@ import { readFileSync } from "fs";
  * - DOCKER_CERT_PATH: Path to directory containing TLS certificates (ca.pem, cert.pem, key.pem)
  * - DOCKER_PORT: Docker daemon port (default: 2375 for HTTP, 2376 for HTTPS)
  */
-function initializeDockerClient(): Docker {
+export function initializeDockerClient(): Docker {
   const dockerHost = process.env.DOCKER_HOST;
   const tlsVerify = process.env.DOCKER_TLS_VERIFY === '1' || process.env.DOCKER_TLS_VERIFY === 'true';
   const certPath = process.env.DOCKER_CERT_PATH;
   const dockerPort = process.env.DOCKER_PORT;
+
+  // Fail fast if TLS verification is requested but no certificate path is provided
+  if (tlsVerify && !certPath) {
+    throw new Error(
+      "DOCKER_TLS_VERIFY is set but DOCKER_CERT_PATH is not configured. " +
+      "Set DOCKER_CERT_PATH to the directory containing ca.pem, cert.pem, and key.pem."
+    );
+  }
 
   // If no DOCKER_HOST is specified, use default (local socket)
   if (!dockerHost) {
@@ -32,7 +40,7 @@ function initializeDockerClient(): Docker {
   // Parse DOCKER_HOST URL
   let protocol: 'http' | 'https' | 'ssh' = 'http';
   let host: string;
-  let port = parseInt(dockerPort || '2375', 10);
+  let useHttps = false;
 
   if (dockerHost.startsWith('unix://')) {
     // Unix socket
@@ -42,33 +50,38 @@ function initializeDockerClient(): Docker {
     const url = dockerHost.replace('tcp://', '');
     const parts = url.split(':');
     host = parts[0];
-    if (parts[1]) {
-      port = parseInt(parts[1], 10);
-    }
   } else if (dockerHost.startsWith('http://')) {
     // HTTP connection
     protocol = 'http';
     const url = dockerHost.replace('http://', '');
     const parts = url.split(':');
     host = parts[0];
-    if (parts[1]) {
-      port = parseInt(parts[1], 10);
-    }
   } else if (dockerHost.startsWith('https://')) {
     // HTTPS connection
     protocol = 'https';
+    useHttps = true;
     const url = dockerHost.replace('https://', '');
     const parts = url.split(':');
     host = parts[0];
-    if (parts[1]) {
-      port = parseInt(parts[1], 10);
-    }
   } else {
     // Assume host:port format
     const parts = dockerHost.split(':');
     host = parts[0];
+  }
+
+  // Determine port: use explicit DOCKER_PORT, then port from URL, then default based on protocol
+  let port: number;
+  if (dockerPort) {
+    port = parseInt(dockerPort, 10);
+  } else {
+    // Extract port from DOCKER_HOST URL if present
+    const urlWithoutProtocol = dockerHost.replace(/^(unix|tcp|https?):\/\//, '');
+    const parts = urlWithoutProtocol.split(':');
     if (parts[1]) {
       port = parseInt(parts[1], 10);
+    } else {
+      // Default port based on whether TLS/HTTPS is used
+      port = (useHttps || tlsVerify) ? 2376 : 2375;
     }
   }
 
@@ -88,16 +101,32 @@ function initializeDockerClient(): Docker {
   // Add TLS/HTTPS support
   if (tlsVerify && certPath) {
     dockerOptions.protocol = 'https';
-    dockerOptions.ca = readFileSync(`${certPath}/ca.pem`);
-    dockerOptions.cert = readFileSync(`${certPath}/cert.pem`);
-    dockerOptions.key = readFileSync(`${certPath}/key.pem`);
-  } else if (protocol === 'https') {
-    dockerOptions.protocol = 'https';
-    // If HTTPS but no certs, try without verification (less secure)
-    if (certPath) {
+    try {
       dockerOptions.ca = readFileSync(`${certPath}/ca.pem`);
       dockerOptions.cert = readFileSync(`${certPath}/cert.pem`);
       dockerOptions.key = readFileSync(`${certPath}/key.pem`);
+    } catch (error) {
+      throw new Error(
+        `Failed to load TLS certificates from ${certPath}. ` +
+        `Ensure ca.pem, cert.pem, and key.pem exist and are readable. ` +
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  } else if (protocol === 'https') {
+    dockerOptions.protocol = 'https';
+    // HTTPS without TLS verification - certificates may be loaded if certPath is provided
+    if (certPath) {
+      try {
+        dockerOptions.ca = readFileSync(`${certPath}/ca.pem`);
+        dockerOptions.cert = readFileSync(`${certPath}/cert.pem`);
+        dockerOptions.key = readFileSync(`${certPath}/key.pem`);
+      } catch (error) {
+        throw new Error(
+          `Failed to load TLS certificates from ${certPath}. ` +
+          `Ensure ca.pem, cert.pem, and key.pem exist and are readable. ` +
+          `Error: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     }
   } else {
     dockerOptions.protocol = protocol;
