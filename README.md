@@ -2,6 +2,19 @@
 
 A fully functional, feature-rich, industry-standard compliant MCP (Model Context Protocol) Server that enables communication with Docker daemon. This server allows AI assistants like GitHub Copilot and Claude to interact with Docker containers, images, networks, and volumes through a standardized interface.
 
+## Quick Start
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Test the server
+npm start
+```
+
 ## Features
 
 - ✅ **Complete Docker Operations**: Create, run, start, stop, remove containers
@@ -262,6 +275,10 @@ This server is specifically designed to handle arrays correctly. If you encounte
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+For detailed usage examples, see [EXAMPLES.md](EXAMPLES.md).
+
+For configuration help, see [CONFIGURATION.md](CONFIGURATION.md).
 
 ## License
 
