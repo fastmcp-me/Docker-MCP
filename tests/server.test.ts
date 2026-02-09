@@ -88,12 +88,17 @@ describe('Docker MCP Server', () => {
 
   describe('Package Info', () => {
     it('should have correct package metadata', async () => {
-      const pkg = await import('../package.json', { assert: { type: 'json' } });
+      // Use dynamic require for package.json access
+      const fs = await import('fs');
+      const path = await import('path');
+      const pkgPath = path.default.join(path.default.dirname(new URL(import.meta.url).pathname), '../package.json');
+      const pkgContent = fs.default.readFileSync(pkgPath, 'utf-8');
+      const pkg = JSON.parse(pkgContent);
       
-      expect(pkg.default.name).toBe('@swartdraak/docker-mcp-server');
-      expect(pkg.default.version).toBe('2.0.0');
-      expect(pkg.default.description).toContain('MCP Server');
-      expect(pkg.default.license).toBe('MIT');
+      expect(pkg.name).toBe('@swartdraak/docker-mcp-server');
+      expect(pkg.version).toBe('2.0.0');
+      expect(pkg.description).toContain('MCP Server');
+      expect(pkg.license).toBe('MIT');
     });
   });
 });

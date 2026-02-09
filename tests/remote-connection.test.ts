@@ -28,7 +28,7 @@ describe('Remote Docker Connection Configuration', () => {
       delete process.env.DOCKER_PORT;
 
       // Dynamic import to get fresh module with current env vars
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -39,7 +39,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should support unix:// socket path', async () => {
       process.env.DOCKER_HOST = 'unix:///var/run/docker.sock';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -48,7 +48,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should support tcp:// format with default port', async () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -57,7 +57,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should support tcp:// format with explicit port', async () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100:2375';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -66,7 +66,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should support http:// format', async () => {
       process.env.DOCKER_HOST = 'http://192.168.1.100:2375';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -75,7 +75,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should support host:port format', async () => {
       process.env.DOCKER_HOST = '192.168.1.100:2375';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
       expect(docker).toBeInstanceOf(Docker);
@@ -89,7 +89,7 @@ describe('Remote Docker Connection Configuration', () => {
       delete process.env.DOCKER_CERT_PATH;
       
       // The module will throw during import because docker client is initialized at module level
-      await expect(import('../src/index.js?t=' + Date.now())).rejects.toThrow(
+      await expect(import('../src/index')).rejects.toThrow(
         'DOCKER_TLS_VERIFY is set but DOCKER_CERT_PATH is not configured'
       );
     });
@@ -98,7 +98,7 @@ describe('Remote Docker Connection Configuration', () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100:2375';
       process.env.DOCKER_TLS_VERIFY = '0';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -109,7 +109,7 @@ describe('Remote Docker Connection Configuration', () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100';
       process.env.DOCKER_PORT = '3000';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -118,7 +118,7 @@ describe('Remote Docker Connection Configuration', () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100';
       delete process.env.DOCKER_PORT;
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -128,7 +128,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should configure for remote HTTP connection', async () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100:2375';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -136,7 +136,7 @@ describe('Remote Docker Connection Configuration', () => {
     it('should configure for SSH tunnel (localhost)', async () => {
       process.env.DOCKER_HOST = 'tcp://localhost:2375';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -147,7 +147,7 @@ describe('Remote Docker Connection Configuration', () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100:3000';
       delete process.env.DOCKER_PORT;
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
@@ -156,9 +156,10 @@ describe('Remote Docker Connection Configuration', () => {
       process.env.DOCKER_HOST = 'tcp://192.168.1.100:3000';
       process.env.DOCKER_PORT = '4000';
       
-      const { initializeDockerClient } = await import('../src/index.js?t=' + Date.now());
+      const { initializeDockerClient } = await import('../src/index');
       const docker = initializeDockerClient();
       expect(docker).toBeDefined();
     });
   });
 });
+
