@@ -10,18 +10,71 @@
 [![Docker](https://img.shields.io/badge/Docker-API-2496ED?logo=docker)](https://www.docker.com/)
 [![Semantic Versioning](https://img.shields.io/badge/semver-2.0.0-blue)](https://semver.org/)
 
-A comprehensive, production-ready, industry-standard compliant MCP (Model Context Protocol) Server that enables full Docker management capabilities for AI assistants like GitHub Copilot and Claude. Featuring 37 powerful tools covering containers, images, networks, volumes, and system operations.
+> A comprehensive, production-ready, industry-standard compliant MCP (Model Context Protocol) Server that enables full Docker management capabilities for AI assistants like GitHub Copilot and Claude. Featuring **37 powerful tools** covering containers, images, networks, volumes, and system operations.
+
+## 📋 Table of Contents
+
+- [About](#about)
+- [Quick Start](#quick-start)
+- [Features](#-features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Available Tools](#available-tools-37-total)
+- [Testing Your Connection](#testing-your-connection)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Documentation](#documentation)
+- [License](#license)
+
+## About
+
+**Docker MCP Server** is a Model Context Protocol server that bridges AI assistants with Docker, enabling natural language Docker operations. Built with TypeScript and following industry best practices, it provides a complete Docker management solution for AI-powered development workflows.
+
+### Why Docker MCP Server?
+
+- **🤖 AI-Native**: Designed specifically for AI assistants (GitHub Copilot, Claude)
+- **🔧 Complete Coverage**: 37 tools covering all essential Docker operations
+- **🌐 Remote Support**: Connect to Docker on any host via TCP, HTTPS, or SSH tunnel
+- **🔒 Security First**: Full TLS/SSL support with certificate authentication
+- **📦 Production Ready**: Comprehensive error handling, type safety, and testing
+- **📚 Well Documented**: Extensive documentation with examples for every feature
+- **🚀 Easy to Use**: Simple installation and configuration
+
+### Use Cases
+
+- **AI-Assisted DevOps**: Let AI assistants manage your Docker infrastructure
+- **Container Orchestration**: Create, manage, and monitor containers through natural language
+- **Development Automation**: Automate Docker workflows with AI assistance
+- **Remote Management**: Securely manage Docker on remote hosts
+- **Learning & Exploration**: Explore Docker capabilities with AI guidance
 
 ## Quick Start
 
+### For npm Users (Recommended)
+
 ```bash
+# Install globally
+npm install -g @swartdraak/docker-mcp-server
+
+# Or use with npx (no installation needed)
+npx @swartdraak/docker-mcp-server
+```
+
+### For Developers
+
+```bash
+# Clone the repository
+git clone https://github.com/Swartdraak/Docker-MCP.git
+cd Docker-MCP
+
 # Install dependencies
 npm install
 
 # Build the project
 npm run build
 
-# Test the server
+# Start the server
 npm start
 ```
 
@@ -474,7 +527,7 @@ Remove unused images
 }
 ```
 
-### Network Operations (6 tools)
+### Network Operations (7 tools)
 
 #### `list_networks`
 List Docker networks
