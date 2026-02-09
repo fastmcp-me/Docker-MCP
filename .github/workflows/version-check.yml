@@ -42,8 +42,8 @@ jobs:
           exit 0
         fi
         
-        BASE_VERSION=$(node -p "require('./package.json.base').version")
-        NEW_VERSION=$(node -p "require('./package.json').version")
+        BASE_VERSION=$(jq -r '.version' package.json.base)
+        NEW_VERSION=$(jq -r '.version' package.json)
         
         echo "Base version: $BASE_VERSION"
         echo "New version: $NEW_VERSION"
