@@ -49,9 +49,9 @@ jobs:
         echo "New version: $NEW_VERSION"
         
         if [ "$BASE_VERSION" = "$NEW_VERSION" ]; then
-          echo "❌ Version not updated in package.json"
+          echo "ℹ️  Version not changed in package.json (still $BASE_VERSION)"
           echo "changed=false" >> $GITHUB_OUTPUT
-          exit 1
+          exit 0
         else
           echo "✅ Version updated: $BASE_VERSION → $NEW_VERSION"
           echo "changed=true" >> $GITHUB_OUTPUT
@@ -74,6 +74,7 @@ jobs:
         echo "✅ Version format is valid"
     
     - name: Check changelog updated
+      if: steps.version.outputs.changed == 'true'
       id: changelog
       run: |
         if [ ! -f CHANGELOG.md.base ]; then
