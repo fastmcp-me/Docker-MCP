@@ -1,4 +1,4 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('jest').Config} */
 export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
@@ -11,6 +11,10 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          module: 'commonjs',
+          esModuleInterop: true,
+        },
       },
     ],
   },
@@ -24,10 +28,5 @@ export default {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
 };
 
